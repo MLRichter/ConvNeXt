@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--job_name", default="convnext", type=str, help="Job name")
     parser.add_argument("--job_dir", default="", type=str, help="Job directory; leave empty for default")
     parser.add_argument("--partition", default="", type=str, help="Partition where to submit")
-    parser.add_argument("--use_volta32", action='store_true', default=True, help="Big models? Use this")
+    parser.add_argument("--use_volta32", action='store_true', default=False, help="Big models? Use this")
     parser.add_argument('--comment', default="", type=str,
                         help='Comment to pass to scheduler, e.g. priority message')
     return parser.parse_args()
