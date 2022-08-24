@@ -29,8 +29,8 @@ def parse_args():
     return parser.parse_args()
 
 def get_shared_folder() -> Path:
-    if Path("./checkpoint/").is_dir():
-        p = Path(f"./checkpoint/convnext")
+    if Path("/home/mlr/projects/def-pal/mlr/ConvNeXt").is_dir():
+        p = Path(f"/home/mlr/projects/def-pal/mlr/ConvNeXt/checkpoint")
         p.mkdir(exist_ok=True)
         return p
     raise RuntimeError("No shared folder available")
