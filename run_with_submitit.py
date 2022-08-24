@@ -84,13 +84,14 @@ def main():
     executor = submitit.AutoExecutor(folder=args.job_dir, slurm_max_num_timeout=30)
 
     num_gpus_per_node = args.ngpus
+    num_gpus_per_node = args.ngpus
     nodes = args.nodes
     timeout_min = args.timeout * 60
 
     partition = args.partition
     kwargs = {}
     if args.use_volta32:
-        kwargs['slurm_constraint'] = 'volta32gb'
+        kwargs['slurm_constraint'] = 'v100l'
     if args.comment:
         kwargs['slurm_comment'] = args.comment
 
