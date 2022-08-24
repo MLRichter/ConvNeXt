@@ -198,6 +198,7 @@ class WandbLogger(object):
 
         try:
             import wandb
+            wandb.login(key="13f4789f1fcf20a514dd3d77b099ed4746992ae3")
             self._wandb = wandb
         except ImportError:
             raise ImportError(
