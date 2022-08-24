@@ -243,6 +243,7 @@ def main(args):
         log_writer = None
 
     if global_rank == 0 and args.enable_wandb:
+        wandb.login(key="13f4789f1fcf20a514dd3d77b099ed4746992ae3")
         wandb_logger = utils.WandbLogger(args)
     else:
         wandb_logger = None
