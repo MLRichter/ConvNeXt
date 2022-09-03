@@ -194,6 +194,7 @@ def get_args_parser():
     # Weights and Biases arguments
     parser.add_argument('--enable_wandb', type=str2bool, default=False,
                         help="enable logging to Weights and Biases")
+    parser.add_argument('--copy', type=str2bool, default=False)
     parser.add_argument('--project', default='convnext', type=str,
                         help="The name of the W&B project where you're sending the new run.")
     parser.add_argument('--wandb_ckpt', type=str2bool, default=False,
@@ -205,6 +206,10 @@ def main(args):
     utils.init_distributed_mode(args)
     print(args)
     device = torch.device(args.device)
+
+    import os
+    if args.copy:
+        os.system("rsync -r --info=progress2 ~/scratch/ilsvrc2012.hdf5 $SLURM_TMPDIR/ilsvrc2012.hdf5")
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
