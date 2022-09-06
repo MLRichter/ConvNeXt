@@ -33,6 +33,11 @@ def get_shared_folder() -> Path:
         p = Path(f"/home/mlr/projects/def-pal/mlr/ConvNeXt/checkpoint")
         p.mkdir(exist_ok=True)
         return p
+    elif Path("/home/mila/m/mats-leon.richter/scratch/ConvNeXt").is_dir():
+        p = Path("/home/mila/m/mats-leon.richter/scratch/ConvNeXt/checkpoint")
+        p.mkdir(exist_ok=True)
+        return p
+
     raise RuntimeError("No shared folder available")
 
 def get_init_file():
