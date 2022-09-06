@@ -199,6 +199,8 @@ def get_args_parser():
                         help="The name of the W&B project where you're sending the new run.")
     parser.add_argument('--wandb_ckpt', type=str2bool, default=False,
                         help="Save model checkpoints as W&B Artifacts.")
+    parser.add_argument('--run-id', type=str, default=None,
+                        help='run-id of the resumed run')
 
     return parser
 

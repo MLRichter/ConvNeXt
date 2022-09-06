@@ -210,7 +210,9 @@ class WandbLogger(object):
         if self._wandb.run is None:
             self._wandb.init(
                 project=args.project,
-                config=args
+                config=args,
+                resume="must" if args.resume != "" else None,
+                id=args.run_id
             )
 
     def log_epoch_metrics(self, metrics, commit=True):
