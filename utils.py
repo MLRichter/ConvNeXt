@@ -331,7 +331,9 @@ def init_distributed_mode(args):
         args.rank, args.dist_url, args.gpu), flush=True)
     torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                          world_size=args.world_size, rank=args.rank)
+    print("| setup complete, waiting for all node-processes to finish")
     torch.distributed.barrier()
+    print("| done")
     setup_for_distributed(args.rank == 0)
 
 
