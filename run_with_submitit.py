@@ -18,6 +18,7 @@ def parse_args():
     classification_parser = classification.get_args_parser()
     parser = argparse.ArgumentParser("Submitit for ConvNeXt", parents=[classification_parser])
     parser.add_argument("--ngpus", default=8, type=int, help="Number of gpus to request on each node")
+    parser.add_argument("--gpu", default=None, type=str, help="gpu name")
     parser.add_argument("--nodes", default=2, type=int, help="Number of nodes to request")
     parser.add_argument("--timeout", default=72, type=int, help="Duration of the job, in hours")
     parser.add_argument("--job_name", default="convnext", type=str, help="Job name")
@@ -96,6 +97,8 @@ def main():
     kwargs = {}
     if args.use_volta32:
         kwargs['slurm_constraint'] = 'v100l'
+    elif args.gpu:
+        kwargs['slurm_constraint'] = args.gpu
     if args.comment:
         kwargs['slurm_comment'] = args.comment
 
