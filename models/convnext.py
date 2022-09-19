@@ -253,7 +253,7 @@ def better_convnext_xlarge(pretrained=False, in_22k=False, **kwargs):
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [better_convnext_tiny, convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge]:
+    for model in [convnext_base, better_convnext_base]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc)
