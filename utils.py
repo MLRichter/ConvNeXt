@@ -212,7 +212,7 @@ class WandbLogger(object):
                 project=args.project,
                 config=args,
                 resume="must" if args.resume != "" else None,
-                id=args.run_id
+                id=getattr(args, "run_id", None)
             )
 
     def log_epoch_metrics(self, metrics, commit=True):
