@@ -59,9 +59,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         loss_value = loss.item()
 
         if not math.isfinite(loss_value): # this could trigger if using AMP
-            print("Loss is {}, skipping training batch".format(loss_value))
-            optimizer.zero_grad()
-            loss.zero_()
+            print("Loss is {}, emergency stop".format(loss_value))
+            assert math.isfinite(loss_value)
 
         if use_amp:
             # this attribute is added by timm on one optimizer (adahessian)
