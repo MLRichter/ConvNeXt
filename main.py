@@ -342,7 +342,8 @@ def main(args):
 
     if args.layer_decay < 1.0 or args.layer_decay > 1.0:
         num_layers = 12 # convnext layers divided into 12 parts, each with a different decayed lr value.
-        assert args.model in ['convnext_small', 'convnext_base', 'convnext_large', 'convnext_xlarge'], \
+        assert args.model in ['convnext_small', 'convnext_base', 'convnext_large', 'convnext_xlarge',
+                              'better_convnext_small', 'better_convnext_base', 'better_convnext_large', 'better_convnext_xlarge'], \
              "Layer Decay impl only supports convnext_small/base/large/xlarge"
         assigner = LayerDecayValueAssigner(list(args.layer_decay ** (num_layers + 1 - i) for i in range(num_layers + 2)))
     else:
