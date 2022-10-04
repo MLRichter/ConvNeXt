@@ -81,7 +81,7 @@ def verify_filelist():
         pickle.dump(val_files, fp)
 
 
-
+from torchvision.datasets import ImageFolder
 
 
 
