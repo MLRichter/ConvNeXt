@@ -211,8 +211,8 @@ def main(args):
 
     import os
     if args.copy:
-        os.system("rsync -r --info=progress ~/scratch/ilsvrc2012.hdf5 $SLURM_TMPDIR/ilsvrc2012.hdf5")
-        args.data_path = os.environ["SLURM_TMPDIR"] + "/ilsvrc2012.hdf5"
+        os.system(f"rsync -r --info=progress {args.data_path} $SLURM_TMPDIR/{Path(args.data_path).name}")
+        args.data_path = os.environ["SLURM_TMPDIR"] + Path(args.data_path).name
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
