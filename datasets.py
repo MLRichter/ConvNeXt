@@ -7,15 +7,20 @@
 
 
 import os
+import tarfile
 from os.path import isfile
 
-from torchvision import datasets, transforms
+from torchvision.datasets import ImageFolder, CIFAR100, CIFAR10
+from torchvision import transforms
 
 from timm.data.constants import \
     IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from timm.data import create_transform
 
 from fast_imagenet import ImageNetDatasetH5
+from tarbal_parser import ParserImageTar
+
+imnet21k_cache = {}
 
 
 def build_dataset(is_train, args):
@@ -33,7 +38,7 @@ def build_dataset(is_train, args):
     print("---------------------------")
 
     if args.data_set == 'CIFAR':
-        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform, download=True)
+        dataset = CIFAR100(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 100
     elif args.data_set == 'IMNET':
         print("reading from datapath", args.data_path)
@@ -42,11 +47,27 @@ def build_dataset(is_train, args):
             dataset = ImageNetDatasetH5(args.data_path, split='train' if is_train else 'val', transform=transform)
         else:
             root = os.path.join(args.data_path, 'train' if is_train else 'val')
-            dataset = datasets.ImageFolder(root, transform=transform)
+            dataset = ImageFolder(root, transform=transform)
         nb_classes = 1000
+    elif args.data_set == "IMNET21K":
+        from timm.data import IterableImageDataset
+        print("Pretraining on ImageNet21K")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = ParserImageTar(args.data_path, tf=tf, subset="train")
+                val = ParserImageTar(args.data_path, tf=tf, subset="val")
+                train_data = IterableImageDataset(root=args.data_path, parser=train,
+                                                split="train", is_training=True)
+                val_data = IterableImageDataset(root=args.data_path, parser=val,
+                                                split="val", is_training=False)
+                imnet21k_cache["train"] = train_data
+                imnet21k_cache["val"] = val_data
+        dataset = imnet21k_cache["train"] if is_train else imnet21k_cache["val"]
+        nb_classes = 10450
     elif args.data_set == "image_folder":
         root = args.data_path if is_train else args.eval_data_path
-        dataset = datasets.ImageFolder(root, transform=transform)
+        dataset = ImageFolder(root, transform=transform)
         nb_classes = args.nb_classes
         assert len(dataset.class_to_idx) == nb_classes
     else:
@@ -84,11 +105,11 @@ def build_transform(is_train, args):
     t = []
     if resize_im:
         # warping (no cropping) when evaluated at 384 or larger
-        if args.input_size >= 384:  
+        if args.input_size >= 384:
             t.append(
-            transforms.Resize((args.input_size, args.input_size), 
-                            interpolation=transforms.InterpolationMode.BICUBIC), 
-        )
+                transforms.Resize((args.input_size, args.input_size),
+                                  interpolation=transforms.InterpolationMode.BICUBIC),
+            )
             print(f"Warping {args.input_size} size input images...")
         else:
             if args.crop_pct is None:
@@ -96,7 +117,7 @@ def build_transform(is_train, args):
             size = int(args.input_size / args.crop_pct)
             t.append(
                 # to maintain same ratio w.r.t. 224 images
-                transforms.Resize(size, interpolation=transforms.InterpolationMode.BICUBIC),  
+                transforms.Resize(size, interpolation=transforms.InterpolationMode.BICUBIC),
             )
             t.append(transforms.CenterCrop(args.input_size))
 
