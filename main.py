@@ -212,7 +212,7 @@ def main(args):
     import os
     if args.copy:
         os.system(f"rsync -r --info=progress {args.data_path} $SLURM_TMPDIR/{Path(args.data_path).name}")
-        args.data_path = os.environ["SLURM_TMPDIR"] + Path(args.data_path).name
+        args.data_path = os.environ["SLURM_TMPDIR"] + "/" + Path(args.data_path).name
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
