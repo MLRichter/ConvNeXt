@@ -50,17 +50,15 @@ def build_dataset(is_train, args):
             dataset = ImageFolder(root, transform=transform)
         nb_classes = 1000
     elif args.data_set == "IMNET21K":
-        from dataset import IterableImageDataset
+        from dataset import ImageDataset
         print("Pretraining on ImageNet21K")
 
         if "train" not in imnet21k_cache:
             with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
                 train = ParserImageTar(args.data_path, tf=tf, subset="train")
                 val = ParserImageTar(args.data_path, tf=tf, subset="val")
-                train_data = IterableImageDataset(root=args.data_path, reader=train,
-                                                split="train", is_training=True)
-                val_data = IterableImageDataset(root=args.data_path, reader=val,
-                                                split="val", is_training=False)
+                train_data = ImageDataset(root=args.data_path, reader=train)
+                val_data = ImageDataset(root=args.data_path, reader=val)
                 imnet21k_cache["train"] = train_data
                 imnet21k_cache["val"] = val_data
         dataset = imnet21k_cache["train"] if is_train else imnet21k_cache["val"]
