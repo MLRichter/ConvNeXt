@@ -96,7 +96,7 @@ def main():
     partition = args.partition
     kwargs = {}
     if args.use_volta32:
-        kwargs['slurm_constraint'] = 'v100'
+        kwargs['slurm_constraint'] = 'v100l'
     elif args.gpu:
         kwargs['slurm_constraint'] = args.gpu
     if args.comment:
