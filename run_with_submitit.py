@@ -96,14 +96,14 @@ def main():
     partition = args.partition
     kwargs = {}
     if args.use_volta32:
-        kwargs['slurm_constraint'] = 'v100l'
+        kwargs['slurm_constraint'] = 'v100'
     elif args.gpu:
         kwargs['slurm_constraint'] = args.gpu
     if args.comment:
         kwargs['slurm_comment'] = args.comment
 
     executor.update_parameters(
-        mem_gb=40 * num_gpus_per_node,
+        mem_gb=32 * num_gpus_per_node,
         gpus_per_node=num_gpus_per_node,
         tasks_per_node=num_gpus_per_node,  # one task per GPU
         cpus_per_task=6,
