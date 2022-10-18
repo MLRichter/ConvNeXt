@@ -190,6 +190,8 @@ def get_args_parser():
 
     parser.add_argument('--use_amp', type=str2bool, default=False, 
                         help="Use PyTorch's AMP (Automatic Mixed Precision) or not")
+    parser.add_argument('--bfloat', type=str2bool, default=False,
+                        help="Use PyTorch's AMP (Automatic Mixed Precision) with bfloat16 instead of float")
 
     # Weights and Biases arguments
     parser.add_argument('--enable_wandb', type=str2bool, default=False,
@@ -414,7 +416,7 @@ def main(args):
             log_writer=log_writer, wandb_logger=wandb_logger, start_steps=epoch * num_training_steps_per_epoch,
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
-            use_amp=args.use_amp
+            use_amp=args.use_amp, bfloat=args.bfloat
         )
         if args.output_dir and args.save_ckpt:
             if (epoch + 1) % args.save_ckpt_freq == 0 or epoch + 1 == args.epochs:
