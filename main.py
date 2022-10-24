@@ -321,11 +321,11 @@ def main(args):
 
     if args.stemstride:
             assert isinstance(model, models.convnext.ConvNeXt)
-            stem_weights = model.stem[0].weight
+            stem_weights = model.downsample_layers[0][0].weight
             scaled = torch.nn.Parameter(torch.nn.functional.interpolate(stem_weights, 4))
-            model.stem[0].kernel_size = (4, 4)
-            model.stem[0].stride = (4, 4)
-            model.stem[0].weight = scaled
+            model.downsample_layers[0][0].kernel_size = (4, 4)
+            model.downsample_layers[0][0].stride = (4, 4)
+            model.downsample_layers[0][0].weight = scaled
 
     model.to(device)
 
