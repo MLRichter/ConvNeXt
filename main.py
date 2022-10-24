@@ -194,6 +194,8 @@ def get_args_parser():
                         help="Use PyTorch's AMP (Automatic Mixed Precision) with bfloat16 instead of float")
     parser.add_argument('--stemstride', type=str2bool, default=False,
                         help="Increases stem stride")
+    parser.add_argument('--stemstriderep', type=str2bool, default=False,
+                        help="Increases stem stride")
 
     # Weights and Biases arguments
     parser.add_argument('--enable_wandb', type=str2bool, default=False,
@@ -323,6 +325,13 @@ def main(args):
             assert isinstance(model, models.convnext.ConvNeXt)
             stem_weights = model.downsample_layers[0][0].weight
             scaled = torch.nn.Parameter(torch.nn.functional.interpolate(stem_weights, 4))
+            model.downsample_layers[0][0].kernel_size = (4, 4)
+            model.downsample_layers[0][0].stride = (4, 4)
+            model.downsample_layers[0][0].weight = scaled
+    if args.stemstriderep:
+            assert isinstance(model, models.convnext.ConvNeXt)
+            stem_weights = model.downsample_layers[0][0].weight
+            scaled = torch.nn.Parameter(stem_weights.repeat((1, 1, 2, 2)) / 4)
             model.downsample_layers[0][0].kernel_size = (4, 4)
             model.downsample_layers[0][0].stride = (4, 4)
             model.downsample_layers[0][0].weight = scaled
