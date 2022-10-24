@@ -192,6 +192,8 @@ def get_args_parser():
                         help="Use PyTorch's AMP (Automatic Mixed Precision) or not")
     parser.add_argument('--bfloat', type=str2bool, default=False,
                         help="Use PyTorch's AMP (Automatic Mixed Precision) with bfloat16 instead of float")
+    parser.add_argument('--stemstride', type=str2bool, default=False,
+                        help="Increases stem stride")
 
     # Weights and Biases arguments
     parser.add_argument('--enable_wandb', type=str2bool, default=False,
@@ -316,6 +318,15 @@ def main(args):
                 print(f"Removing key {k} from pretrained checkpoint")
                 del checkpoint_model[k]
         utils.load_state_dict(model, checkpoint_model, prefix=args.model_prefix)
+
+    if args.stemstride:
+            assert isinstance(model, models.convnext.ConvNeXt)
+            stem_weights = model.stem[0].weight
+            scaled = torch.nn.Parameter(torch.nn.functional.interpolate(stem_weights, 4))
+            model.stem[0].kernel_size = (4, 4)
+            model.stem[0].stride = (4, 4)
+            model.stem[0].weight = scaled
+
     model.to(device)
 
     model_ema = None
@@ -393,7 +404,8 @@ def main(args):
 
     if args.eval:
         print(f"Eval only mode")
-        test_stats = evaluate(data_loader_val, model, device, use_amp=args.use_amp)
+        test_stats =\
+            evaluate(data_loader_val, model, device, use_amp=args.use_amp)
         print(f"Accuracy of the network on {len(dataset_val)} test images: {test_stats['acc1']:.5f}%")
         return
 
@@ -479,6 +491,7 @@ def main(args):
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('ConvNeXt training and evaluation script', parents=[get_args_parser()])
