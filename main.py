@@ -496,7 +496,6 @@ def main(args):
     if wandb_logger and args.wandb_ckpt and args.save_ckpt and args.output_dir:
         wandb_logger.log_checkpoints()
 
-
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
