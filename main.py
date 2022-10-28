@@ -185,8 +185,10 @@ def get_args_parser():
                         help='number of distributed processes')
     parser.add_argument('--local_rank', default=-1, type=int)
     parser.add_argument('--dist_on_itp', type=str2bool, default=False)
+    parser.add_argument('--tcp', type=str2bool, default=False)
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+
 
     parser.add_argument('--use_amp', type=str2bool, default=False, 
                         help="Use PyTorch's AMP (Automatic Mixed Precision) or not")

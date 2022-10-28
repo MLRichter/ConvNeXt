@@ -18,6 +18,7 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
+from torch._C._distributed_c10d import TCPStore
 from torch._six import inf
 
 from tensorboardX import SummaryWriter
@@ -330,8 +331,14 @@ def init_distributed_mode(args):
     print("Training with World Size:", args.world_size, "using", args.dist_backend)
     print('| distributed init (rank {}): {}, gpu {}'.format(
         args.rank, args.dist_url, args.gpu), flush=True)
-    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                         world_size=args.world_size, rank=args.rank)
+    if args.tcp:
+        print('| creating TCP-store at {}, port: {}'.format(os.environ['MASTER_ADDR'], os.environ['MASTER_PORT']))
+        store = TCPStore(host_name=os.environ['MASTER_ADDR'], port=int(os.environ['MASTER_PORT']), world_size=args.world_size, is_master=args.rank == 0)
+        torch.distributed.init_process_group(backend=args.dist_backend, store=store,
+                                             world_size=args.world_size, rank=args.rank)
+    else:
+        torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                             world_size=args.world_size, rank=args.rank)
     print("| setup complete, waiting for all node-processes to finish")
     torch.distributed.barrier()
     print("| done")
