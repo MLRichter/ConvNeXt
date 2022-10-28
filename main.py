@@ -213,6 +213,8 @@ def get_args_parser():
     return parser
 
 def main(args):
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
     utils.init_distributed_mode(args)
     print(args)
     device = torch.device(args.device)
