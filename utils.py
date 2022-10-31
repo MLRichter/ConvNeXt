@@ -342,7 +342,7 @@ def init_distributed_mode(args):
                                              world_size=args.world_size, rank=args.rank)
     else:
         import time
-        if args.rank > 0:
+        if args.rank >= 0:
             sleeptime = (args.world_size+1+-args.rank)
             print('| creating process group, waiting for:', sleeptime)
 
