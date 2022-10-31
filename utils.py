@@ -298,6 +298,7 @@ def save_on_master(*args, **kwargs):
 
 
 def init_distributed_mode(args):
+    print(args)
 
     if args.dist_on_itp:
         args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
