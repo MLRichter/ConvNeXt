@@ -336,7 +336,7 @@ def init_distributed_mode(args):
         if "MASTER_ADDR" not in os.environ:
             os.environ['MASTER_ADDR'] = '127.0.0.1'
             os.environ['MASTER_PORT'] = '29500'
-        print('| creating TCP-store at {}, port: {}'.format(os.environ['MASTER_ADDR'], os.environ['MASTER_PORT']))
+        print('| creating TCP-store at {}, port: {}, rank: {}'.format(os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'], args.rank))
         store = TCPStore(host_name=os.environ['MASTER_ADDR'], port=int(os.environ['MASTER_PORT']), world_size=args.world_size, is_master=args.rank == 0)
         torch.distributed.init_process_group(backend=args.dist_backend, store=store,
                                              world_size=args.world_size, rank=args.rank)
