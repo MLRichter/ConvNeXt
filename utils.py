@@ -340,6 +340,7 @@ def init_distributed_mode(args):
         torch.distributed.init_process_group(backend=args.dist_backend, store=store,
                                              world_size=args.world_size, rank=args.rank)
     else:
+        print('| creating process group')
         torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                              world_size=args.world_size, rank=args.rank)
     print("| setup complete, waiting for all node-processes to finish")
