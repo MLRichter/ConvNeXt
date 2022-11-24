@@ -13,6 +13,9 @@ from fvcore.nn import FlopCountAnalysis
 from timm.models.layers import trunc_normal_, DropPath
 from timm.models.registry import register_model
 
+from models.layers import Lambda
+
+
 class Block(nn.Module):
     r""" ConvNeXt Block. There are two equivalent implementations:
     (1) DwConv -> LayerNorm (channels_first) -> 1x1 Conv -> GELU -> 1x1 Conv; all in (N, C, H, W)
@@ -49,7 +52,8 @@ class Block(nn.Module):
         x = x.permute(0, 3, 1, 2) # (N, H, W, C) -> (N, C, H, W)
 
         x = input + self.drop_path(x)
-        x = nn.functional.interpolate(x, scale_factor=self.scale)
+        if self.scale != 1.0:
+            x = nn.functional.interpolate(x, scale_factor=self.scale)
         return x
 
 class ConvNeXt(nn.Module):
@@ -69,7 +73,7 @@ class ConvNeXt(nn.Module):
     def __init__(self, in_chans=3, num_classes=1000, 
                  depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], drop_path_rate=0., 
                  layer_scale_init_value=1e-6, head_init_scale=1.,
-                 stem=4, **kwargs
+                 stem=4, ds_interpol = None, scale=0.91,  **kwargs
                  ):
         super().__init__()
         self.default_cfg = {}
@@ -84,7 +88,8 @@ class ConvNeXt(nn.Module):
             downsample_layer = nn.Sequential(
                     LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
                     nn.Conv2d(dims[i], dims[i+1], kernel_size=1, stride=1),
-                    #nn.Identity()
+                    nn.Identity() if ds_interpol is None
+                    else Lambda(lambda x: torch.nn.functional.interpolate(x, scale_factor=ds_interpol)),
             )
             self.downsample_layers.append(downsample_layer)
 
@@ -94,7 +99,9 @@ class ConvNeXt(nn.Module):
         for i in range(4):
             stage = nn.Sequential(
                 *[Block(dim=dims[i], drop_path=dp_rates[cur + j],
-                layer_scale_init_value=layer_scale_init_value, scale=1.0 if i == 3 and j == depths[i]-1 else 0.91) for j in range(depths[i])]
+                layer_scale_init_value=layer_scale_init_value, scale=1.0
+                    if (i == 3 and j == depths[i]-1) or ds_interpol is not None else scale)
+                  for j in range(depths[i])]
             )
             self.stages.append(stage)
             cur += depths[i]
@@ -115,7 +122,7 @@ class ConvNeXt(nn.Module):
         for i in range(4):
             x = self.downsample_layers[i](x)
             x = self.stages[i](x)
-        #print(x.size())
+        print(x.size())
         return self.norm(x.mean([-2, -1])) # global average pooling, (N, C, H, W) -> (N, C)
 
     def forward(self, x):
@@ -171,10 +178,27 @@ def interpol_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
         model.load_state_dict(checkpoint["model"])
     return model
 
+@register_model
+def fat_interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], stem=2, ds_interpol=(2/3), **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+@register_model
+def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], ds_interpol=(2/3), **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [interpol_convnext_tiny]:
+    for model in [fat_interpol2_convnext_tiny]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))
