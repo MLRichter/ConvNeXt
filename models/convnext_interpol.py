@@ -40,6 +40,7 @@ class Block(nn.Module):
         self.scale = scale
 
     def forward(self, x):
+        print(x.size())
         input = x
         x = self.dwconv(x)
         x = x.permute(0, 2, 3, 1) # (N, C, H, W) -> (N, H, W, C)
@@ -198,7 +199,7 @@ def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [fat_interpol2_convnext_tiny]:
+    for model in [interpol_convnext_tiny]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))
