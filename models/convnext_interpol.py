@@ -54,7 +54,7 @@ class Block(nn.Module):
 
         x = input + self.drop_path(x)
         if self.scale != 1.0:
-            x = nn.functional.interpolate(x, scale_factor=self.scale)
+            x = nn.functional.interpolate(x, scale_factor=self.scale, mode="area")
         return x
 
 class ConvNeXt(nn.Module):
