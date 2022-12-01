@@ -90,7 +90,7 @@ class ConvNeXt(nn.Module):
                     LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
                     nn.Conv2d(dims[i], dims[i+1], kernel_size=1, stride=1),
                     nn.Identity() if ds_interpol is None
-                    else Lambda(lambda x: torch.nn.functional.interpolate(x, scale_factor=ds_interpol)),
+                    else Lambda(lambda x: torch.nn.functional.interpolate(x, mode="area", scale_factor=ds_interpol)),
             )
             self.downsample_layers.append(downsample_layer)
 
