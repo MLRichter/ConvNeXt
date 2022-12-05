@@ -64,6 +64,21 @@ def build_dataset(is_train, args):
                                 reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
                                 transform=transform)
         nb_classes = 10450
+    elif args.data_set == "FALLIMNET21K":
+        from dataset import ImageDataset
+        print("Pretraining on ImageNet21K")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = ParserImageTar(args.data_path, tf=tf, subset="")
+                val = train
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
+
+        dataset = ImageDataset(root=args.data_path,
+                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                                transform=transform)
+        nb_classes = len(imnet21k_cache["train"].class_to_idx)
     elif args.data_set == "image_folder":
         root = args.data_path if is_train else args.eval_data_path
         dataset = ImageFolder(root, transform=transform)
