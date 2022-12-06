@@ -18,6 +18,7 @@ from timm.data.constants import \
 from timm.data import create_transform
 
 from fast_imagenet import ImageNetDatasetH5
+from nested_tarbal_parser import ParserImageInTar
 from tarbal_parser import ParserImageTar
 
 imnet21k_cache = {}
@@ -67,13 +68,10 @@ def build_dataset(is_train, args):
     elif args.data_set == "FALLIMNET21K":
         from dataset import ImageDataset
         print("Pretraining on ImageNet21K")
-
-        if "train" not in imnet21k_cache:
-            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
-                train = ParserImageTar(args.data_path, tf=tf, subset="")
-                val = train
-                imnet21k_cache["train"] = train
-                imnet21k_cache["val"] = val
+        train = ParserImageInTar(args.data_path)
+        val = train
+        imnet21k_cache["train"] = train
+        imnet21k_cache["val"] = val
 
         dataset = ImageDataset(root=args.data_path,
                                 reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
