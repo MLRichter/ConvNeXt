@@ -303,11 +303,11 @@ def main(args):
         head_init_scale=args.head_init_scale,
         )
 
-    if hasattr(torch, "compile"):
-        print("compiling model for inference")
-        model = torch.compile(model, backend="inductor")
-    else:
-        print("compiler is not available for the used torch version, this may result in slower training")
+    #if hasattr(torch, "compile"):
+    #    print("compiling model for inference")
+    #    model = torch.compile(model, backend="inductor")
+    #else:
+    #    print("compiler is not available for the used torch version, this may result in slower training")
 
     if args.finetune:
         if args.finetune.startswith('https'):
