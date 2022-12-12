@@ -32,6 +32,7 @@ import utils
 import models.convnext
 import models.convnext_isotropic
 import models.convnext_interpol
+import models.moat
 
 def str2bool(v):
     """
