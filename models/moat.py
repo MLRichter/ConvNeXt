@@ -302,6 +302,8 @@ class MOATAttnetion(nn.Module):
                 nn.Linear(in_channels, int(in_channels*self.scale_factor)),
                 nn.GELU()
             )
+        else:
+            self.proj = nn.Identity()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """ Forward pass.
