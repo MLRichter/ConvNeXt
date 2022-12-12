@@ -436,6 +436,7 @@ class MOAT(nn.Module):
             norm_layer=nn.BatchNorm2d,
             norm_layer_transformer=nn.LayerNorm,
             global_pool: str = "avg",
+            **kwargs
     ) -> None:
         super(MOAT, self).__init__()
         assert len(depths) == len(channels), "For each stage a channel dimension must be given."
