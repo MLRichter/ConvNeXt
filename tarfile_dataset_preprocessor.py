@@ -98,7 +98,7 @@ def main(src: str, tgt: str, njobs: int, size: int, n_classes: int):
 
 
 if "__main__" == __name__:
-    src: str = "~/scratch/fall11_whole.tar"
-    tgt: str = "~/scratch/ImageNet21K_Fall"
+    src: str = "/home/mlr/projects/def-pal/mlr/ConvNeXt/fall11_whole.tar"
+    tgt: str = "/home/mlr/projects/def-pal/mlr/ConvNeXt/ImageNet21K_Fall"
     jobs = 1
     main(src, tgt, jobs, size=224, n_classes=10000000000000000000)
