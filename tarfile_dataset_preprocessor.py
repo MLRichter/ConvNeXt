@@ -66,8 +66,6 @@ def process_datapoints(parser: ParserImageInTar, cls: int, tgt: Path, size: int)
                 "is exists skipping..."
                   )
             return
-        else:
-            print("Exists but is corrupted, rewriting...")
     condidates = np.where(parser.targets == cls)[0]
     print("Found", len(condidates), "for class", cls)
     for i, candidate in enumerate(condidates):
@@ -104,7 +102,7 @@ def main(src: str, tgt: str, njobs: int, size: int, n_classes: int):
 
 
 if "__main__" == __name__:
-    src: str = "../../Downloads/fall11_whole.tar"
-    tgt: str = "../../Downloads/ImageNet21K_Fall"
+    src: str = "fall11_whole.tar"
+    tgt: str = "ImageNet21K_Fall"
     jobs = 1
     main(src, tgt, jobs, size=224, n_classes=10000000000000000000)
