@@ -1,24 +1,18 @@
-import pickle
-import tarfile
+
 import os
-from glob import glob
 from pathlib import Path
 from shutil import rmtree
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
-from joblib import Parallel, delayed
-from timm.utils import natural_key
+
 from tqdm import tqdm
 from PIL import Image
 import logging
 import numpy as np
 
-from nested_tarbal_parser import CACHE_FILENAME_SUFFIX
 from nested_tarbal_parser import ParserImageInTar
 
 _logger = logging.getLogger(__name__)
-
-#logging.basicConfig(level=logging.DEBUG)
 
 import tarfile
 
@@ -95,14 +89,16 @@ def create_jobs(parser: ParserImageInTar, n_classes: int, tgt: Path, size: int
 
 
 def main(src: str, tgt: str, njobs: int, size: int, n_classes: int):
+    print("Creating parser")
     parser = create_parser(src_tar=Path(src))
+    print("Parser Created")
     jobs = create_jobs(parser, n_classes=n_classes, tgt=tgt, size=size)
     for job in tqdm(jobs):
         process_datapoints(*job)
 
 
 if "__main__" == __name__:
-    src: str = "fall11_whole.tar"
-    tgt: str = "ImageNet21K_Fall"
+    src: str = "~/scratch/fall11_whole.tar"
+    tgt: str = "~/scratch/ImageNet21K_Fall"
     jobs = 1
     main(src, tgt, jobs, size=224, n_classes=10000000000000000000)
