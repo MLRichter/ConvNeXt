@@ -97,8 +97,8 @@ def create_jobs(parser: ParserImageInTar, n_classes: int, tgt: Path, size: int
 def main(src: str, tgt: str, njobs: int, size: int, n_classes: int):
     parser = create_parser(src_tar=Path(src))
     jobs = create_jobs(parser, n_classes=n_classes, tgt=tgt, size=size)
-    pool = Parallel(n_jobs=njobs, verbose=10000)
-    pool(delayed(process_datapoints)(*job) for job in jobs)
+    for job in tqdm(jobs):
+        process_datapoints(*job)
 
 
 if "__main__" == __name__:
