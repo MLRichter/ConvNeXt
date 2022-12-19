@@ -9,7 +9,6 @@ import torch.distributed as dist
 
 class DistributedWeightedSampler(Sampler):
 
-
     def __init__(self, weights: torch.Tensor, dataset, num_replicas: Optional[int] = None, rank: Optional[int] = None,
                  shuffle: bool = True, replacement: bool = True):
         if num_replicas is None:

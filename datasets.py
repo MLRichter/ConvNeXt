@@ -10,7 +10,7 @@ import pickle
 import tarfile
 from os.path import isfile
 
-from torchvision.datasets import ImageFolder, CIFAR100, CIFAR10, SVHN
+from torchvision.datasets import ImageFolder, CIFAR100, CIFAR10, SVHN, Omniglot
 from torchvision import transforms
 
 from timm.data.constants import \
@@ -27,8 +27,12 @@ imnet21k_cache = {}
 global multi_dataset_class_mapping
 multi_dataset_class_mapping = None
 
+greyscale_datasets = [
+    "OMNIGLOT", "MNIST"
+]
+
 def build_dataset(is_train, args):
-    transform = build_transform(is_train, args)
+    transform = build_transform(is_train, args, to_rgb=args.data_set in greyscale_datasets)
 
     print("Transform = ")
     if isinstance(transform, tuple):
@@ -51,7 +55,7 @@ def build_dataset(is_train, args):
             copy_args = deepcopy(args)
             copy_args.data_set = ds
             copy_args.data_path = dp
-            dataset, nb_classes = build_dataset(is_train, copy_args)
+            dataset, nb_classes = build_dataset(is_train=is_train, args=copy_args)
             total_classes += nb_classes
             dataset_obj.append(dataset)
         global multi_dataset_class_mapping
@@ -69,6 +73,9 @@ def build_dataset(is_train, args):
     elif args.data_set == 'CIFAR10':
         dataset = CIFAR10(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 10
+    elif args.data_set == "OMNIGLOT":
+        dataset = Omniglot(args.data_path, background=is_train, transform=transform, download=True)
+        nb_classes = 963
     elif args.data_set == 'SVHN':
         dataset = SVHN(args.data_path, split='train' if is_train else 'test', transform=transform, download=True)
         nb_classes = 10
@@ -93,8 +100,7 @@ def build_dataset(is_train, args):
                 imnet21k_cache["val"] = val
 
         dataset = ImageDataset(root=args.data_path,
-                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
-                                transform=transform)
+                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"])
         nb_classes = 10450
     elif args.data_set == "FALLIMNET21K":
         from dataset import ImageDataset
@@ -120,7 +126,14 @@ def build_dataset(is_train, args):
     return dataset, nb_classes
 
 
-def build_transform(is_train, args):
+def _inject_to_rgb_after_to_tensor(transform_pipeline: list):
+    for i, t in enumerate(transform_pipeline):
+        if t.__class__.__name__ == "ToTensor":
+            transform_pipeline.insert(i+1, transforms.Lambda(lambda x: x.repeat((3, 1, 1))))
+            break
+
+
+def build_transform(is_train, args, to_rgb=False):
     resize_im = args.input_size > 32
     imagenet_default_mean_and_std = args.imagenet_default_mean_and_std
     mean = IMAGENET_INCEPTION_MEAN if not imagenet_default_mean_and_std else IMAGENET_DEFAULT_MEAN
@@ -140,6 +153,10 @@ def build_transform(is_train, args):
             mean=mean,
             std=std,
         )
+        if to_rgb:
+            transform.transforms.insert(0, transforms.Lambda(lambda x: x.convert('RGB')))
+        #    _inject_to_rgb_after_to_tensor(transform.transforms)
+
         if not resize_im:
             transform.transforms[0] = transforms.RandomCrop(
                 args.input_size, padding=4)
@@ -165,6 +182,10 @@ def build_transform(is_train, args):
             t.append(transforms.CenterCrop(args.input_size))
 
     t.append(transforms.ToTensor())
+    if to_rgb:
+        t.insert(0, transforms.Lambda(lambda x: x.convert('RGB')))
+
+        #t.append(transforms.Lambda(lambda x: x.repeat((3, 1, 1))))
     t.append(transforms.Normalize(mean, std))
     return transforms.Compose(t)
 
@@ -175,8 +196,8 @@ if __name__ == "__main__":
     class FakeArgs:
 
         def __init__(self):
-            self.data_path = "../tmp;../tmp;../tmp"
-            self.data_set = "CIFAR;CIFAR10;SVHN"
+            self.data_path = "../tmp;../tmp;../tmp;../tmp"
+            self.data_set = "OMNIGLOT;CIFAR;CIFAR10;SVHN"
             self.input_size = 224
             self.crop_pct = None
             self.imagenet_default_mean_and_std = "IMNET"
@@ -190,5 +211,5 @@ if __name__ == "__main__":
     val_ds, val_classes = build_dataset(is_train=False, args=FakeArgs())
 
     print("Samples", len(ds), "Classes", classes, "CumSum", ds.cummulative_sizes)
-    print("Val Samples", len(val_ds), "Val Classes", val_classes, "CumSum", ds.cummulative_sizes)
+    print("Val Samples", len(val_ds), "Val Classes", val_classes, "CumSum", val_ds.cummulative_sizes)
     print(multi_dataset_class_mapping)
