@@ -22,6 +22,9 @@ from timm.data.mixup import Mixup
 from timm.models import create_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from timm.utils import ModelEma
+from torch.utils.data import WeightedRandomSampler
+
+from distributed_weighted_sampler import DistributedWeightedSampler
 from optim_factory import create_optimizer, LayerDecayValueAssigner
 
 from datasets import build_dataset
@@ -55,6 +58,10 @@ def get_args_parser():
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--update_freq', default=1, type=int,
                         help='gradient accumulation steps')
+    parser.add_argument("--ds_weights", default=None, type=str,
+                        help="semicolon seperated list of datasets weights, only works with MergedDataset")
+    parser.add_argument("--ds_weights_eval", default=None, type=str,
+                        help="semicolon seperated list of datasets weights, only works with MergedDataset")
 
     # Model parameters
     parser.add_argument('--model', default='convnext_tiny', type=str, metavar='MODEL',
@@ -242,17 +249,50 @@ def main(args):
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
 
-    sampler_train = torch.utils.data.DistributedSampler(
-        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True, seed=args.seed,
-    )
+    if args.ds_weights is not None:
+        values = [float(val) for val in args.ds_weights.split(";")]
+        assert len(values) == len(dataset_train.datasets)
+        weights = []
+        for val, ds in zip(values, dataset_train.datasets):
+            ds_weight = [val]*len(ds)
+            weights += ds_weight
+        arr_weights = np.asarray(weights)
+        normed_arr_weights = arr_weights / arr_weights.sum()
+        samples_weight = torch.from_numpy(normed_arr_weights)
+        sampler_train = DistributedWeightedSampler(weights=samples_weight.type('torch.DoubleTensor'),
+                                                   dataset=dataset_train,
+                                                   num_replicas=num_tasks,
+                                                   rank=global_rank,
+                                                   shuffle=True)
+    else:
+
+        sampler_train = torch.utils.data.DistributedSampler(
+            dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True, seed=args.seed,
+        )
     print("Sampler_train = %s" % str(sampler_train))
     if args.dist_eval:
         if len(dataset_val) % num_tasks != 0:
             print('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
                     'This will slightly alter validation results as extra duplicate entries are added to achieve '
                     'equal num of samples per-process.')
-        sampler_val = torch.utils.data.DistributedSampler(
-            dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        if args.ds_weights_eval is not None:
+            values = [float(val) for val in args.ds_weights.split(";")]
+            assert len(values) == len(dataset_val.datasets)
+            weights = []
+            for val, ds in zip(values, dataset_val.datasets):
+                ds_weight = [val] * len(ds)
+                weights += ds_weight
+            arr_weights = np.asarray(weights)
+            normed_arr_weights = arr_weights / arr_weights.sum()
+            samples_weight = torch.from_numpy(normed_arr_weights)
+            sampler_val = DistributedWeightedSampler(weights=samples_weight.type('torch.DoubleTensor'),
+                                                       dataset=dataset_val,
+                                                       num_replicas=num_tasks,
+                                                       rank=global_rank,
+                                                       shuffle=True)
+        else:
+            sampler_val = torch.utils.data.DistributedSampler(
+                dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
     else:
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
@@ -267,13 +307,14 @@ def main(args):
     else:
         wandb_logger = None
 
+
     data_loader_train = torch.utils.data.DataLoader(
-        dataset_train, sampler=sampler_train,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=True,
-    )
+            dataset_train, sampler=sampler_train,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            pin_memory=args.pin_mem,
+            drop_last=True,
+        )
 
     if dataset_val is not None:
         data_loader_val = torch.utils.data.DataLoader(

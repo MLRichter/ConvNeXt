@@ -4,13 +4,13 @@
 
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
-
+import json
 import os
+import pickle
 import tarfile
 from os.path import isfile
 
-from torchvision.datasets import ImageFolder, CIFAR100, CIFAR10
+from torchvision.datasets import ImageFolder, CIFAR100, CIFAR10, SVHN
 from torchvision import transforms
 
 from timm.data.constants import \
@@ -20,9 +20,12 @@ from timm.data import create_transform
 from fast_imagenet import ImageNetDatasetH5
 from nested_tarbal_parser import ParserImageInTar
 from tarbal_parser import ParserImageTar
+from merge_datasets import obtain_class_mapping, MergeDataset
+from copy import deepcopy
 
 imnet21k_cache = {}
-
+global multi_dataset_class_mapping
+multi_dataset_class_mapping = None
 
 def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
@@ -38,9 +41,37 @@ def build_dataset(is_train, args):
             print(t)
     print("---------------------------")
 
-    if args.data_set == 'CIFAR':
+    # this is specifically for multi-dataset training
+    if ";" in args.data_set:
+        datasets = args.data_set.split(";")
+        datapaths = args.data_path.split(";")
+        total_classes = 0
+        dataset_obj = []
+        for ds, dp in zip(datasets, datapaths):
+            copy_args = deepcopy(args)
+            copy_args.data_set = ds
+            copy_args.data_path = dp
+            dataset, nb_classes = build_dataset(is_train, copy_args)
+            total_classes += nb_classes
+            dataset_obj.append(dataset)
+        global multi_dataset_class_mapping
+        if multi_dataset_class_mapping is None:
+            multi_dataset_class_mapping = obtain_class_mapping(dataset_obj)
+        dataset = MergeDataset(dataset_obj, class_mapping=multi_dataset_class_mapping)
+        nb_classes = total_classes
+        with open("class_mapping.json", "w") as fp:
+            ds_to_idx = {ds: idx for idx, ds in enumerate(datasets)}
+            json_out = {"Dataser2Index": ds_to_idx, "Class2Index": multi_dataset_class_mapping}
+            json.dump(json_out, fp)
+    elif args.data_set == 'CIFAR':
         dataset = CIFAR100(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 100
+    elif args.data_set == 'CIFAR10':
+        dataset = CIFAR10(args.data_path, train=is_train, transform=transform, download=True)
+        nb_classes = 10
+    elif args.data_set == 'SVHN':
+        dataset = SVHN(args.data_path, split='train' if is_train else 'test', transform=transform, download=True)
+        nb_classes = 10
     elif args.data_set == 'IMNET':
         print("reading from datapath", args.data_path)
         if isfile(args.data_path):
@@ -136,3 +167,28 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(mean, std))
     return transforms.Compose(t)
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    Path("../tmp").mkdir(parents=True, exist_ok=True)
+    class FakeArgs:
+
+        def __init__(self):
+            self.data_path = "../tmp;../tmp;../tmp"
+            self.data_set = "CIFAR;CIFAR10;SVHN"
+            self.input_size = 224
+            self.crop_pct = None
+            self.imagenet_default_mean_and_std = "IMNET"
+            self.color_jitter = 0.2
+            self.aa = 'rand-m9-mstd0.5-inc1'
+            self.train_interpolation = 'bicubic'
+            self.reprob = 0.25
+            self.remode = 'pixel'
+            self.recount = 1
+    ds, classes = build_dataset(is_train=True, args=FakeArgs())
+    val_ds, val_classes = build_dataset(is_train=False, args=FakeArgs())
+
+    print("Samples", len(ds), "Classes", classes, "CumSum", ds.cummulative_sizes)
+    print("Val Samples", len(val_ds), "Val Classes", val_classes, "CumSum", ds.cummulative_sizes)
+    print(multi_dataset_class_mapping)
