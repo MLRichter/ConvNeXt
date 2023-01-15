@@ -148,6 +148,8 @@ def get_args_parser():
                         help='finetune from checkpoint')
     parser.add_argument('--head_init_scale', default=1.0, type=float,
                         help='classifier head initial scale, typically adjusted in fine-tuning')
+    parser.add_argument('--freeze', default=False,
+                        help='freezes all weights except for the final layer')
     parser.add_argument('--model_key', default='model|module', type=str,
                         help='which key to load from saved state dict, usually model or model_ema')
     parser.add_argument('--model_prefix', default='', type=str)
@@ -477,6 +479,16 @@ def main(args):
 
     print("Start training for %d epochs" % args.epochs)
     start_time = time.time()
+
+    if args.freeze:
+        print("Freezing Weights...")
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.head.parameters():
+            param.requires_grad = True
+        print("Done")
+
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
