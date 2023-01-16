@@ -100,7 +100,8 @@ def build_dataset(is_train, args):
                 imnet21k_cache["val"] = val
 
         dataset = ImageDataset(root=args.data_path,
-                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"])
+                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                               transform=transform)
         nb_classes = 10450
     elif args.data_set == "FALLIMNET21K":
         from dataset import ImageDataset
