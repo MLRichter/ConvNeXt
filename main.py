@@ -429,7 +429,16 @@ def main(args):
     if assigner is not None:
         print("Assigned values = %s" % str(assigner.values))
 
+    if args.freeze:
+        print("Freezing Weights...")
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.head.parameters():
+            param.requires_grad = True
+        print("Done")
+
     if args.distributed:
+
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
         model_without_ddp = model.module
 
@@ -479,15 +488,6 @@ def main(args):
 
     print("Start training for %d epochs" % args.epochs)
     start_time = time.time()
-
-    if args.freeze:
-        print("Freezing Weights...")
-        for param in model.parameters():
-            param.requires_grad = False
-        for param in model.head.parameters():
-            param.requires_grad = True
-        print("Done")
-
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
