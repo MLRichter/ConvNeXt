@@ -197,16 +197,3 @@ def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
     return model
 
 
-if __name__ == '__main__':
-    from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [interpol_convnext_tiny]:
-        model_name = model.__name__
-        arc = model()
-        graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))
-        print(input_resolution_range(graph))
-        #visualize_architecture(graph, model_name="ConvNeXT").view()
-        n_parameters = sum(p.numel() for p in arc.parameters() if p.requires_grad)
-        print(n_parameters / 1000000)
-        flops = FlopCountAnalysis(arc, torch.ones(1, 3, 224, 224)).total()
-        print("GFlops", flops / 1000000000)
-

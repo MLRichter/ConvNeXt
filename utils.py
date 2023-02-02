@@ -1,11 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-
-# All rights reserved.
-
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
-
 import os
 import math
 import time
@@ -199,7 +191,6 @@ class WandbLogger(object):
 
         try:
             import wandb
-            wandb.login(key="13f4789f1fcf20a514dd3d77b099ed4746992ae3")
             self._wandb = wandb
         except ImportError:
             raise ImportError(

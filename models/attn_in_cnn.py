@@ -3,12 +3,10 @@ import torch
 import torch.nn as nn
 
 import models.layers as layers
-import models.presesnet_dnn_block as resnet_dnn
 import models.presesnet_dnn_block as preresnet_dnn
 import models.classifier_block as classifier
 
 from functools import partial
-from itertools import cycle
 from einops import rearrange
 from models.layers import conv1x1, DropPath
 from models.attentions import Attention2d
@@ -274,15 +272,3 @@ def dnn_152(num_classes=1000, stem=True, name="alternet_152", **block_kwargs):
     return AlterNet(preresnet_dnn.Bottleneck, AttentionBlockB, stem=partial(StemB, pool=stem),
                     num_blocks=(3, 8, 36, 4), num_blocks2=(0, 1, 3, 2), heads=(3, 6, 12, 24),
                     num_classes=num_classes, name=name, **block_kwargs)
-
-if __name__ == '__main__':
-    from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    model = dnn_50()#MobileNetV2(mode="cifar-human", dataset="cifar100", better=True)#ResNet(Bottleneck, [3, 4, 6, 3], strides=[1, 1, 2, 1], sa_num=None,
-            #       dataset="cifar100", mode="human-cifar",
-            #       input_shape=32, output_shape=8)
-    graph = create_graph_from_pytorch_model(model, input_res=(1, 3, 224, 224), custom_layers=["Transformer", "AttentionBlockB", "Attention2d"])
-
-    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(n_parameters / 1000000)
-    print(input_resolution_range(graph, lower_bound=True))
-    visualize_architecture(graph, model_name="CNN").view()

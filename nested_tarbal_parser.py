@@ -1,14 +1,3 @@
-""" A dataset parser that reads tarfile based datasets
-
-This parser can read and extract image samples from:
-* a single tar of image files
-* a folder of multiple tarfiles containing imagefiles
-* a tar of tars containing image files
-
-Labels are based on the combined folder and/or tar name structure.
-
-Hacked together by / Copyright 2020 Ross Wightman
-"""
 import os
 import tarfile
 import pickle

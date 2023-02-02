@@ -1,7 +1,3 @@
-""" Quick n Simple Image Folder, Tarfile based DataSet
-
-Hacked together by / Copyright 2019, Ross Wightman
-"""
 import torch.utils.data as data
 import os
 import torch
