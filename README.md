@@ -31,7 +31,7 @@ the last completed epoch.
 
 This setup is made for A100 GPUs with 40GB of memory.
 ```
-python run_with_submitit.py --nodes 16 --ngpus 2 --timeout 72 --job_dir ~/save/my/results/here/please/ --data_set IMNET21K --epochs 90 --warmup_epochs 5 --model convnext_large --drop_path 0.1 --batch_size 32 --lr 4e-3 --update_freq 4 --model_ema true --model_ema_eval true --data_path ~/scratch/imagenet21k_resized.tar --enable_wandb True --use_amp True --num_workers 6 --copy True 
+python run_with_submitit.py --nodes 16 --ngpus 2 --timeout 72 --job_dir ~/save/my/results/here/please/ --data_set IMNET21K --epochs 90 --warmup_epochs 5 --model convnext_large --drop_path 0.1 --batch_size 32 --lr 4e-3 --update_freq 4 --model_ema true --model_ema_eval true --data_path ~/scratch/imagenet21k_resized.tar --enable_wandb True --use_amp False --num_workers 6 --copy True 
 ```
 ### Running as script
 
@@ -39,7 +39,7 @@ In case of a slurm is not available or submitit is not an option it may be desir
 the training directly from the main script:
 
 ```
-python main.py --world size 64 --timeout 72 --job_dir ~/save/my/results/here/please/ --data_set IMNET21K --epochs 90 --warmup_epochs 5 --model convnext_large --drop_path 0.1 --batch_size 32 --lr 4e-3 --update_freq 4 --model_ema true --model_ema_eval true --data_path ~/scratch/imagenet21k_resized.tar --enable_wandb True --use_amp True --num_workers 6 --copy True --tcp true
+python main.py --world size 64 --timeout 72 --job_dir ~/save/my/results/here/please/ --data_set IMNET21K --epochs 90 --warmup_epochs 5 --model convnext_large --drop_path 0.1 --batch_size 32 --lr 4e-3 --update_freq 4 --model_ema true --model_ema_eval true --data_path ~/scratch/imagenet21k_resized.tar --enable_wandb True --use_amp False --num_workers 6 --copy True --tcp true
 ```
 
 In this case it has be ensured that MASTER_ADDR and MASTER_PORT are set in the environment of every single process.
