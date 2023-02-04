@@ -1,7 +1,3 @@
-# --------------------------------------------------------
-# MOAT
-# Written by ZeChen Wu
-# --------------------------------------------------------
 """ MOAT
 A PyTorch implementation of the paper:'MOAT: Alternating Mobile Convolution and Attention Brings Strong Vision Models'
 """

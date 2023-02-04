@@ -1,0 +1,10 @@
+torch
+torchvision
+timm
+pillow
+numpy
+scipy
+matplotlib
+pandas
+h5py
+submitit
