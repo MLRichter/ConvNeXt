@@ -68,7 +68,7 @@ Also, the environment variables `RANK`, `LOCAL_RANK` and `WORLD_SIZE` are requir
 
 ### Mixed Precision
 In case you are interested in mixed precision performance you can enable mixed-precision training using `--use_amp true`, however
-in this case I recommend using `convnext_tiny` instead of `convnext_large`, since large models tend to produce irreversable
+in this case I recommend using `--model convnext_tiny` instead of `--model convnext_large`, since large models tend to produce irreversable
 rounding errors more often, which results in individual processes dying, deadlocking the entire process group.
 
 
