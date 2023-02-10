@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument("--job_dir", default="", type=str, help="Job directory; leave empty for default")
     parser.add_argument("--partition", default=None, type=str, help="Partition where to submit")
     parser.add_argument("--reservation", default=None, type=str, help="Partition where to submit")
+    parser.add_argument("--account", default=None, type=str, help="account where to submit")
     parser.add_argument("--use_volta32", action='store_true', default=False, help="Big models? Use this")
     parser.add_argument('--comment', default="", type=str,
                         help='Comment to pass to scheduler, e.g. priority message')
@@ -94,6 +95,8 @@ def main():
         kwargs['slurm_constraint'] = args.gpu
     if args.comment:
         kwargs['slurm_comment'] = args.comment
+    if args.account:
+        kwargs['slurm_account'] = args.account
     if args.reservation is not None:
         kwargs['reservation'] = 'DGXA100'
 
