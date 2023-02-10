@@ -34,6 +34,10 @@ def get_shared_folder() -> Path:
         p = Path("/home/mila/m/mats-leon.richter/scratch/ConvNeXt/checkpoint")
         p.mkdir(exist_ok=True)
         return p
+    elif Path("/scratch/mlrichter/").is_dir():
+        p = Path("/scratch/mlrichter/checkpoint")
+        p.mkdir(exist_ok=True)
+        return p
 
     raise RuntimeError("No shared folder available")
 
