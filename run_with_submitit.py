@@ -1,11 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-
-# All rights reserved.
-
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
-
 import argparse
 import os
 import uuid
@@ -13,6 +5,7 @@ from pathlib import Path
 
 import main as classification
 import submitit
+
 
 def parse_args():
     classification_parser = classification.get_args_parser()
@@ -25,10 +18,12 @@ def parse_args():
     parser.add_argument("--job_dir", default="", type=str, help="Job directory; leave empty for default")
     parser.add_argument("--partition", default=None, type=str, help="Partition where to submit")
     parser.add_argument("--reservation", default=None, type=str, help="Partition where to submit")
+    parser.add_argument("--account", default=None, type=str, help="account where to submit")
     parser.add_argument("--use_volta32", action='store_true', default=False, help="Big models? Use this")
     parser.add_argument('--comment', default="", type=str,
                         help='Comment to pass to scheduler, e.g. priority message')
     return parser.parse_args()
+
 
 def get_shared_folder() -> Path:
     if Path("/home/mlr/projects/def-pal/mlr/ConvNeXt").is_dir():
@@ -42,6 +37,7 @@ def get_shared_folder() -> Path:
 
     raise RuntimeError("No shared folder available")
 
+
 def get_init_file():
     # Init file must not exist, but it's parent dir must exist.
     os.makedirs(str(get_shared_folder()), exist_ok=True)
@@ -49,6 +45,7 @@ def get_init_file():
     if init_file.exists():
         os.remove(str(init_file))
     return init_file
+
 
 class Trainer(object):
     def __init__(self, args):
@@ -84,7 +81,7 @@ class Trainer(object):
 
 def main():
     args = parse_args()
-    
+
     if args.job_dir == "":
         args.job_dir = get_shared_folder() / "%j"
 
@@ -102,6 +99,8 @@ def main():
         kwargs['slurm_constraint'] = args.gpu
     if args.comment:
         kwargs['slurm_comment'] = args.comment
+    if args.account:
+        kwargs['slurm_account'] = args.account
     if args.reservation is not None:
         kwargs['reservation'] = 'DGXA100'
 
@@ -127,6 +126,7 @@ def main():
     job = executor.submit(trainer)
 
     print("Submitted job_id:", job.job_id)
+
 
 if __name__ == "__main__":
     main()
