@@ -29,11 +29,12 @@ _logger = logging.getLogger(__name__)
 CACHE_FILENAME_SUFFIX = '_tarinfos.pickle'
 
 
-def get_s3_filesize(file):
-    current_position = file.tell()
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(current_position)
+def get_s3_filesize(filepath):
+    with smart_open(filepath, "rb") as file:
+        current_position = file.tell()
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(current_position)
     return size
 
 
@@ -85,7 +86,7 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
         root_name = root.strip(os.path.sep).split(os.path.sep)[-1]
         tar_filenames = glob(os.path.join(root, '*.tar'), recursive=True)
     num_tars = len(tar_filenames)
-    tar_bytes = sum([os.path.getsize(f) for f in tar_filenames])
+    tar_bytes = sum([os.path.getsize(f) if not is_s3(f) else get_s3_filesize(f) for f in tar_filenames])
     assert num_tars, f'No .tar files found at specified path ({root}).'
 
     _logger.info(f'Scanning {tar_bytes/1024**2:.2f}MB of tar files...')
