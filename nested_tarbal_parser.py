@@ -76,6 +76,8 @@ def _extract_tarinfo(tf: tarfile.TarFile, parent_info: Dict, extensions=IMG_EXTE
 
 
 def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extensions=IMG_EXTENSIONS, sort=True):
+    filesize = get_s3_filesize(root)
+    print(filesize)
     root_is_tar = False
     if os.path.isfile(root) or is_s3(root):
         assert os.path.splitext(root)[-1].lower() == '.tar'
