@@ -124,6 +124,7 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
                     num_children = len(parent_info["children"])
             else:
                 with smart_open(root, 'rb') as s3_source:
+                    s3_source.seek(0)
                     with tarfile.open(fileobj=s3_source, mode='r|') as tf:  # tarinfo scans done in streaming mode
                         parent_info = dict(name=os.path.relpath(fn, root), path=path, ti=None, children=[], samples=[])
                         num_samples = _extract_tarinfo(tf, parent_info, extensions=extensions)
