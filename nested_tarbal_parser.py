@@ -76,9 +76,6 @@ def _extract_tarinfo(tf: tarfile.TarFile, parent_info: Dict, extensions=IMG_EXTE
 
 
 def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extensions=IMG_EXTENSIONS, sort=True):
-    if is_s3(root):
-        filesize = get_s3_filesize(root)
-    print(filesize)
     root_is_tar = False
     if os.path.isfile(root) or is_s3(root):
         assert os.path.splitext(root)[-1].lower() == '.tar'
@@ -123,6 +120,7 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
                     num_samples = _extract_tarinfo(tf, parent_info, extensions=extensions)
                     num_children = len(parent_info["children"])
             else:
+                print(root)
                 with smart_open(root, 'rb') as s3_source:
                     s3_source.seek(0)
                     with tarfile.open(fileobj=s3_source, mode='r|') as tf:  # tarinfo scans done in streaming mode
