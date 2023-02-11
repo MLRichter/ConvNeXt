@@ -17,6 +17,7 @@ import numpy as np
 from glob import glob
 from typing import List, Dict
 
+from smart_open import smart_open
 from timm.utils.misc import natural_key
 
 from timm.data.parsers.parser import Parser
@@ -26,6 +27,18 @@ IMG_EXTENSIONS = ('.png', '.jpg', '.jpeg')
 
 _logger = logging.getLogger(__name__)
 CACHE_FILENAME_SUFFIX = '_tarinfos.pickle'
+
+
+def get_s3_filesize(file):
+    current_position = file.tell()
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(current_position)
+    return size
+
+
+def is_s3(root):
+    return "s3:" == root[:3]
 
 
 class TarState:
@@ -62,7 +75,7 @@ def _extract_tarinfo(tf: tarfile.TarFile, parent_info: Dict, extensions=IMG_EXTE
 
 def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extensions=IMG_EXTENSIONS, sort=True):
     root_is_tar = False
-    if os.path.isfile(root):
+    if os.path.isfile(root) or is_s3(root):
         assert os.path.splitext(root)[-1].lower() == '.tar'
         tar_filenames = [root]
         root, root_name = os.path.split(root)
@@ -82,7 +95,7 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
         cache_tarinfo = True if tar_bytes > 10*1024**3 else False  # FIXME magic number, 10GB
     if cache_tarinfo:
         cache_filename = '_' + root_name + CACHE_FILENAME_SUFFIX
-        cache_path = os.path.join(root, cache_filename)
+        cache_path = os.path.join(root if not is_s3(root) else ".", cache_filename)
     if os.path.exists(cache_path):
         _logger.info(f'Reading tar info from cache file {cache_path}.')
         with open(cache_path, 'rb') as pf:
@@ -91,10 +104,17 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
     else:
         for i, fn in enumerate(tar_filenames):
             path = '' if root_is_tar else os.path.splitext(os.path.basename(fn))[0]
-            with tarfile.open(fn, mode='r|') as tf:  # tarinfo scans done in streaming mode
-                parent_info = dict(name=os.path.relpath(fn, root), path=path, ti=None, children=[], samples=[])
-                num_samples = _extract_tarinfo(tf, parent_info, extensions=extensions)
-                num_children = len(parent_info["children"])
+            if not is_s3(root):
+                with tarfile.open(fn, mode='r|') as tf:  # tarinfo scans done in streaming mode
+                    parent_info = dict(name=os.path.relpath(fn, root), path=path, ti=None, children=[], samples=[])
+                    num_samples = _extract_tarinfo(tf, parent_info, extensions=extensions)
+                    num_children = len(parent_info["children"])
+            else:
+                with smart_open(root, 'rb') as s3_source:
+                    with tarfile.open(fileobj=s3_source, mode='r|') as tf:  # tarinfo scans done in streaming mode
+                        parent_info = dict(name=os.path.relpath(fn, root), path=path, ti=None, children=[], samples=[])
+                        num_samples = _extract_tarinfo(tf, parent_info, extensions=extensions)
+                        num_children = len(parent_info["children"])
                 _logger.debug(
                     f'{i}/{num_tars}. Extracted tarinfos from {fn}. {num_children} children, {num_samples} samples.')
             info['tartrees'].append(parent_info)
