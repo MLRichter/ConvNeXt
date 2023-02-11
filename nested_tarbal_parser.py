@@ -30,6 +30,7 @@ CACHE_FILENAME_SUFFIX = '_tarinfos.pickle'
 
 
 def get_s3_filesize(filepath):
+    print(filepath)
     with smart_open(filepath, "rb") as file:
         current_position = file.tell()
         file.seek(0, 2)
