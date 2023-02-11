@@ -90,7 +90,15 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
         root_name = root.strip(os.path.sep).split(os.path.sep)[-1]
         tar_filenames = glob(os.path.join(root, '*.tar'), recursive=True)
     num_tars = len(tar_filenames)
-    tar_bytes = sum([os.path.getsize(f) if not is_s3(root) else get_s3_filesize(f) for f in tar_filenames])
+    tar_bytes = []
+    for f in tar_filenames:
+        if is_s3(f):
+            size = get_s3_filesize(f)
+        else:
+            size = os.path.getsize(f)
+        tar_bytes.append(f)
+    tar_bytes = sum(tar_bytes)
+    #tar_bytes = sum([os.path.getsize(f) if not is_s3(f) else get_s3_filesize(f) for f in tar_filenames])
     assert num_tars, f'No .tar files found at specified path ({root}).'
 
     _logger.info(f'Scanning {tar_bytes/1024**2:.2f}MB of tar files...')
