@@ -36,7 +36,7 @@ def get_s3_filesize(filepath):
         file.seek(0, 2)
         size = file.tell()
         file.seek(current_position)
-    return size
+    return int(size)
 
 
 def is_s3(root):
@@ -96,7 +96,7 @@ def extract_tarinfos(root, class_name_to_idx=None, cache_tarinfo=None, extension
             size = get_s3_filesize(f)
         else:
             size = os.path.getsize(f)
-        tar_bytes.append(f)
+        tar_bytes.append(size)
     tar_bytes = sum(tar_bytes)
     #tar_bytes = sum([os.path.getsize(f) if not is_s3(f) else get_s3_filesize(f) for f in tar_filenames])
     assert num_tars, f'No .tar files found at specified path ({root}).'
