@@ -260,7 +260,8 @@ if __name__ == '__main__':
     import sys
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
     logging.getLogger().setLevel(logging.DEBUG)
-    x = "s3://s-laion/mlrichter-bucket/fall11_whole.tar"
+    x = "/scratch/mlrichter/fall11_whole.tar"
+    #x = "s3://s-laion/mlrichter-bucket/fall11_whole.tar"
     parser = ParserImageInTar(x)
 
 
