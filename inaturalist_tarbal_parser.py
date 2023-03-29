@@ -66,6 +66,7 @@ class iNatParserImageTar(Parser):
         class_to_idx = None
         if class_map:
             class_to_idx = load_class_map(class_map, root)
+        print(root)
         assert os.path.isfile(root)
         self.root = root
 
