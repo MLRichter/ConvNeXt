@@ -18,6 +18,7 @@ from timm.data.constants import \
 from timm.data import create_transform
 
 from fast_imagenet import ImageNetDatasetH5
+from inaturalist_tarbal_parser import iNatParserImageTar
 from nested_tarbal_parser import ParserImageInTar
 from tarbal_parser import ParserImageTar
 from merge_datasets import obtain_class_mapping, MergeDataset
@@ -103,6 +104,54 @@ def build_dataset(is_train, args):
                                 reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
                                transform=transform)
         nb_classes = 10450
+
+    elif "INATMINI" in args.data_set:
+        dataset, target = args.data_set.split("_")
+        from dataset import ImageDataset
+        print("Pretraining on ImageNet21K")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = iNatParserImageTar(os.path.join(args.data_path, "train_mini.tar"), tf=tf, subset="train_mini", target=target)
+                val = iNatParserImageTar(os.path.join(args.data_path, "val.tar"), tf=tf, subset="val", target=target)
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
+
+        dataset = ImageDataset(root=args.data_path,
+                               reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                               transform=transform)
+        nb_classes = len(imnet21k_cache["val"].class_to_idx)
+    elif "INATFULL" in args.data_set:
+        dataset, target = args.data_set.split("_")
+        from dataset import ImageDataset
+        print("Pretraining on ImageNet21K")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = iNatParserImageTar(os.path.join(args.data_path, "train.tar"), tf=tf, subset="train", target=target)
+                val = iNatParserImageTar(os.path.join(args.data_path, "val.tar"), tf=tf, subset="val", target=target)
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
+
+        dataset = ImageDataset(root=args.data_path,
+                               reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                               transform=transform)
+        nb_classes = len(imnet21k_cache["val"].class_to_idx)
+    elif args.data_set == "FOOD101":
+        from dataset import ImageDataset
+        print("Pretraining on FOOD101")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = ParserImageTar(args.data_path, tf=tf, subset="train")
+                val = ParserImageTar(args.data_path, tf=tf, subset="test")
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
+
+        dataset = ImageDataset(root=args.data_path,
+                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                               transform=transform)
+        nb_classes = 101
     elif args.data_set == "FALLIMNET21K":
         from dataset import ImageDataset
         print("Pretraining on ImageNet21K")
