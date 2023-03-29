@@ -111,11 +111,10 @@ def build_dataset(is_train, args):
         print("Pretraining on ImageNet21K")
 
         if "train" not in imnet21k_cache:
-            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
-                train = iNatParserImageTar(os.path.join(args.data_path, "train_mini.tar"), tf=tf, subset="train_mini", target=target)
-                val = iNatParserImageTar(os.path.join(args.data_path, "val.tar"), tf=tf, subset="val", target=target)
-                imnet21k_cache["train"] = train
-                imnet21k_cache["val"] = val
+            train = iNatParserImageTar(os.path.join(args.data_path, "train_mini.tar"), subset="train_mini", target=target)
+            val = iNatParserImageTar(os.path.join(args.data_path, "val.tar"), subset="val", target=target)
+            imnet21k_cache["train"] = train
+            imnet21k_cache["val"] = val
 
         dataset = ImageDataset(root=args.data_path,
                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
