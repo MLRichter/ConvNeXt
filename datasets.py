@@ -108,7 +108,7 @@ def build_dataset(is_train, args):
     elif "INATMINI" in args.data_set:
         dataset, target = args.data_set.split("_")
         from dataset import ImageDataset
-        print("Pretraining on ImageNet21K")
+        print("Pretraining on iNaturalist Mini using target", target)
 
         if "train" not in imnet21k_cache:
             train = iNatParserImageTar(os.path.join(args.data_path, "train_mini.tar"), subset="train_mini", target=target)
@@ -123,7 +123,7 @@ def build_dataset(is_train, args):
     elif "INATFULL" in args.data_set:
         dataset, target = args.data_set.split("_")
         from dataset import ImageDataset
-        print("Pretraining on ImageNet21K")
+        print("Pretraining on iNaturalist")
 
         if "train" not in imnet21k_cache:
             train = iNatParserImageTar(os.path.join(args.data_path, "train.tar"), subset="train", target=target)
