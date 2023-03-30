@@ -72,7 +72,7 @@ class iNatParserImageTar(Parser):
 
         if tf is None:
             with tarfile.open(root) as tf:  # cannot keep this open across processes, reopen later
-                self.samples, self.class_to_idx = extract_tarinfo(tf, class_to_idx, target=target)
+                self.samples, self.class_to_idx = extract_tarinfo(tf, class_to_idx, subset=subset, target=target)
         else:
             self.samples, self.class_to_idx = extract_tarinfo(tf, class_to_idx, subset=subset, target=target)
         self.imgs = self.samples
@@ -126,13 +126,14 @@ if __name__ == '__main__':
     #    extract_tarinfo(tf, class_to_idx=None, sort=True, subset=None, target="family")
     with tarfile.open(data) as tf:  # cannot keep this open across processes, reopen later
         start = time()
-        train = iNatParserImageTar(data, tf=tf, subset="val")
+        train = iNatParserImageTar(data, tf=tf, subset="val", target="kingdom")
         ttime = time()
         val = iNatParserImageTar(data, tf=tf, subset="val", target="kingdom")
         ftime = time()
         print("Total Time:\t", ftime-start)
         print("Train Samples:\t", len(train.samples), "\ttook", ttime-start, "seconds")
         print("Val Samples:\t", len(train.samples), "\ttook", ftime-ttime, "seconds")
+        print(len(train.class_to_idx))
         for i in range(10):
             atime = time()
             img, target = train[i]

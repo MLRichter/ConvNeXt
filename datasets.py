@@ -244,8 +244,8 @@ if __name__ == "__main__":
     class FakeArgs:
 
         def __init__(self):
-            self.data_path = "../tmp;../tmp;../tmp;../tmp"
-            self.data_set = "OMNIGLOT;CIFAR;CIFAR10;SVHN"
+            self.data_path = "../../Downloads/"
+            self.data_set = "INATMINI_kingdom"
             self.input_size = 224
             self.crop_pct = None
             self.imagenet_default_mean_and_std = "IMNET"
@@ -255,9 +255,9 @@ if __name__ == "__main__":
             self.reprob = 0.25
             self.remode = 'pixel'
             self.recount = 1
-    ds, classes = build_dataset(is_train=True, args=FakeArgs())
-    val_ds, val_classes = build_dataset(is_train=False, args=FakeArgs())
+    ds, classes = build_dataset(is_train=False, args=FakeArgs())
+    val_ds, val_classes = build_dataset(is_train=True, args=FakeArgs())
 
-    print("Samples", len(ds), "Classes", classes, "CumSum", ds.cummulative_sizes)
-    print("Val Samples", len(val_ds), "Val Classes", val_classes, "CumSum", val_ds.cummulative_sizes)
+    print("Samples", len(ds), "Classes", classes)#, "CumSum", ds.cummulative_sizes)
+    print("Val Samples", len(val_ds), "Val Classes", val_classes)
     print(multi_dataset_class_mapping)
