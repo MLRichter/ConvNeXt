@@ -159,7 +159,22 @@ def build_dataset(is_train, args):
         dataset = ImageDataset(root=args.data_path,
                                 reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
                                transform=transform)
-        nb_classes = 101
+        nb_classes = len(imnet21k_cache["val"].class_to_idx)
+    elif args.data_set == "eurosat":
+        from dataset import ImageDataset
+        print("Pretraining on EuroSat")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = ParserImageTar(args.data_path, tf=tf, subset="train")
+                val = ParserImageTar(args.data_path, tf=tf, subset="val")
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
+
+        dataset = ImageDataset(root=args.data_path,
+                                reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
+                               transform=transform)
+        nb_classes = len(imnet21k_cache["val"].class_to_idx)
     elif args.data_set == "FALLIMNET21K":
         from dataset import ImageDataset
         print("Pretraining on ImageNet21K")
@@ -254,8 +269,8 @@ if __name__ == "__main__":
     class FakeArgs:
 
         def __init__(self):
-            self.data_path = "../textures.tar"
-            self.data_set = "DTD"
+            self.data_path = "../EuroSAT.tar"
+            self.data_set = "eurosat"
             self.input_size = 224
             self.crop_pct = None
             self.imagenet_default_mean_and_std = "IMNET"
