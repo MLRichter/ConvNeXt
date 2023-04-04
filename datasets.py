@@ -145,6 +145,16 @@ def build_dataset(is_train, args):
                 val = ParserImageTar(args.data_path, tf=tf, subset="test")
                 imnet21k_cache["train"] = train
                 imnet21k_cache["val"] = val
+    elif args.data_set == "DTD":
+        from dataset import ImageDataset
+        print("Pretraining on DTD")
+
+        if "train" not in imnet21k_cache:
+            with tarfile.open(args.data_path) as tf:  # cannot keep this open across processes, reopen later
+                train = ParserImageTar(args.data_path, tf=tf, subset="train")
+                val = ParserImageTar(args.data_path, tf=tf, subset="val")
+                imnet21k_cache["train"] = train
+                imnet21k_cache["val"] = val
 
         dataset = ImageDataset(root=args.data_path,
                                 reader=imnet21k_cache["train"] if is_train else imnet21k_cache["val"],
@@ -244,8 +254,8 @@ if __name__ == "__main__":
     class FakeArgs:
 
         def __init__(self):
-            self.data_path = "../../Downloads/"
-            self.data_set = "INATMINI_kingdom"
+            self.data_path = "../textures.tar"
+            self.data_set = "DTD"
             self.input_size = 224
             self.crop_pct = None
             self.imagenet_default_mean_and_std = "IMNET"
@@ -255,8 +265,8 @@ if __name__ == "__main__":
             self.reprob = 0.25
             self.remode = 'pixel'
             self.recount = 1
-    ds, classes = build_dataset(is_train=False, args=FakeArgs())
-    val_ds, val_classes = build_dataset(is_train=True, args=FakeArgs())
+    ds, classes = build_dataset(is_train=True, args=FakeArgs())
+    val_ds, val_classes = build_dataset(is_train=False, args=FakeArgs())
 
     print("Samples", len(ds), "Classes", classes)#, "CumSum", ds.cummulative_sizes)
     print("Val Samples", len(val_ds), "Val Classes", val_classes)

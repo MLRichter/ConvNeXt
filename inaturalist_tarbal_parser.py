@@ -66,7 +66,6 @@ class iNatParserImageTar(Parser):
         class_to_idx = None
         if class_map:
             class_to_idx = load_class_map(class_map, root)
-        print(root)
         #assert os.path.isfile(root)
         self.root = root
 
@@ -124,27 +123,27 @@ if __name__ == '__main__':
     #print(os.path.exists(data))
     #with tarfile.open(data) as tf:
     #    extract_tarinfo(tf, class_to_idx=None, sort=True, subset=None, target="family")
-    with tarfile.open(data) as tf:  # cannot keep this open across processes, reopen later
-        start = time()
-        train = iNatParserImageTar(data, tf=tf, subset="val", target="kingdom")
-        ttime = time()
-        val = iNatParserImageTar(data, tf=tf, subset="val", target="kingdom")
-        ftime = time()
-        print("Total Time:\t", ftime-start)
-        print("Train Samples:\t", len(train.samples), "\ttook", ttime-start, "seconds")
-        print("Val Samples:\t", len(train.samples), "\ttook", ftime-ttime, "seconds")
-        print(len(train.class_to_idx))
-        for i in range(10):
-            atime = time()
-            img, target = train[i]
-            etime = time()
-            img = Image.open(img).convert('RGB')
-            img = np.array(img)
-            print("Requesting took", etime-atime, "seconds")
-            imshow(img)
-            show()
+    for targer in CATEGORIES_2021:
+        with tarfile.open(data) as tf:  # cannot keep this open across processes, reopen later
+            start = time()
+            train = iNatParserImageTar(data, tf=tf, subset="val", target=targer)
+            ttime = time()
+            print("Target:", targer, "Num classes:", len(train.class_to_idx))
+            #print("Total Time:\t", ftime-start)
+            #print("Train Samples:\t", len(train.samples), "\ttook", ttime-start, "seconds")
+            #print("Val Samples:\t", len(train.samples), "\ttook", ftime-ttime, "seconds")
+            #print(len(train.class_to_idx))
+            #for i in range(10):
+            #    atime = time()
+            #    img, target = train[i]
+            #    etime = time()
+            #    img = Image.open(img).convert('RGB')
+            #    img = np.array(img)
+            #    print("Requesting took", etime-atime, "seconds")
+            #    imshow(img)
+            #    show()
 
-            img, target = val[i]
-            img = np.array(Image.open(img).convert('RGB'))
-            imshow(img)
-            show()
+            #    img, target = val[i]
+            #    img = np.array(Image.open(img).convert('RGB'))
+            #    imshow(img)
+            #    show()
