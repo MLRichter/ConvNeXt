@@ -33,6 +33,8 @@ from engine import train_one_epoch, evaluate
 from utils import NativeScalerWithGradNormCount as NativeScaler
 import utils
 import models.convnext
+import models.efficientnet
+import models.resnet
 import models.convnext_isotropic
 import models.convnext_interpol
 import models.moat
