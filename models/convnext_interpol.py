@@ -43,7 +43,7 @@ class Block(nn.Module):
             self.downscale = FracConv(dim, dim, alpha=scale)
 
     def forward(self, x):
-        print(x.size())
+        #print(x.size())
         input = x
         x = self.dwconv(x)
         x = x.permute(0, 2, 3, 1) # (N, C, H, W) -> (N, H, W, C)
