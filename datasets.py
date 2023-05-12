@@ -287,8 +287,8 @@ if __name__ == "__main__":
     class FakeArgs:
 
         def __init__(self):
-            self.data_path = "../plantnet.tar"
-            self.data_set = "PLANTNET"
+            self.data_path = ".."
+            self.data_set = "INATFULL_full"
             self.input_size = 224
             self.crop_pct = None
             self.imagenet_default_mean_and_std = "IMNET"

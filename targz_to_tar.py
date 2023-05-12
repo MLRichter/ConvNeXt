@@ -7,10 +7,13 @@ def extract(src, tgt):
     os.makedirs(tmp_dir, exist_ok=True)
 
     # Open the .tar.gz file in read mode
+    print("Opening compressed file")
     with tarfile.open(src, "r:gz") as gz_file:
         # Open a new .tar file in write mode
+        print("opening target folder")
         with tarfile.open(tgt, "w") as tar_file:
             # Iterate over each file in the .tar.gz archive
+            print("beginning extraction")
             for member in tqdm.tqdm(gz_file.getmembers(), "extracting files"):
                 # Extract the file from the .tar.gz archive to the temporary directory
                 if len(member.name.split(".")) == 1:
@@ -22,10 +25,11 @@ def extract(src, tgt):
 
                 # Add the extracted file to the new .tar file using the relative path
                 tar_file.add(os.path.join(tmp_dir, member.name), arcname=rel_path)
+                os.remove(os.path.join(tmp_dir, member.name))
 
 
 
 if __name__ == '__main__':
-    src = "../../Downloads/train_mini.tar.gz"
-    tgt = "../../Downloads/train_mini.tar"
+    src = "../train.tar.gz"
+    tgt = "../train.tar"
     extract(src, tgt)

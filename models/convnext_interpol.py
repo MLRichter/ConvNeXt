@@ -13,6 +13,7 @@ from fvcore.nn import FlopCountAnalysis
 from timm.models.layers import trunc_normal_, DropPath
 from timm.models.registry import register_model
 
+from models.fraction_patcher import FracConv
 from models.layers import Lambda
 
 
@@ -27,7 +28,7 @@ class Block(nn.Module):
         drop_path (float): Stochastic depth rate. Default: 0.0
         layer_scale_init_value (float): Init value for Layer Scale. Default: 1e-6.
     """
-    def __init__(self, dim, drop_path=0., layer_scale_init_value=1e-6, scale = 0.9):
+    def __init__(self, dim, drop_path=0., layer_scale_init_value=1e-6, scale = 0.85):
         super().__init__()
         self.dwconv = nn.Conv2d(dim, dim, kernel_size=7, padding=3, groups=dim) # depthwise conv
         self.norm = LayerNorm(dim, eps=1e-6)
@@ -38,6 +39,8 @@ class Block(nn.Module):
                                     requires_grad=True) if layer_scale_init_value > 0 else None
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.scale = scale
+        if self.scale != 1:
+            self.downscale = FracConv(dim, dim, alpha=scale)
 
     def forward(self, x):
         print(x.size())
@@ -54,7 +57,7 @@ class Block(nn.Module):
 
         x = input + self.drop_path(x)
         if self.scale != 1.0:
-            x = nn.functional.interpolate(x, scale_factor=self.scale, mode="area")
+            x = self.downscale(x)#nn.functional.interpolate(x, scale_factor=self.scale, mode="area")
         return x
 
 class ConvNeXt(nn.Module):
@@ -86,11 +89,16 @@ class ConvNeXt(nn.Module):
         )
         self.downsample_layers.append(stem)
         for i in range(3):
+            #downsample_layer = nn.Sequential(
+            #        LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
+            #        nn.Conv2d(dims[i], dims[i+1], kernel_size=1, stride=1),
+            #        nn.Identity() if ds_interpol is None
+            #        else Lambda(lambda x: torch.nn.functional.interpolate(x, mode="area", scale_factor=ds_interpol)),
+            #)
             downsample_layer = nn.Sequential(
-                    LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
-                    nn.Conv2d(dims[i], dims[i+1], kernel_size=1, stride=1),
-                    nn.Identity() if ds_interpol is None
-                    else Lambda(lambda x: torch.nn.functional.interpolate(x, mode="area", scale_factor=ds_interpol)),
+                LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
+                nn.Conv2d(dims[i], dims[i + 1], kernel_size=1, stride=1) if ds_interpol is None
+                else FracConv(in_channels=dims[i], out_channels=dims[i + 1], alpha=(ds_interpol)),
             )
             self.downsample_layers.append(downsample_layer)
 
@@ -172,7 +180,7 @@ model_urls = {
 
 @register_model
 def interpol_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
-    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], **kwargs)
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], scale=0.91, **kwargs)
     if pretrained:
         url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
@@ -181,7 +189,7 @@ def interpol_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
 
 @register_model
 def fat_interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
-    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], stem=2, ds_interpol=(2/3), **kwargs)
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], stem=4, ds_interpol=(0.62), scale=1.0, **kwargs)
     if pretrained:
         url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
@@ -199,7 +207,7 @@ def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [interpol_convnext_tiny]:
+    for model in [interpol_convnext_tiny, fat_interpol2_convnext_tiny]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))
