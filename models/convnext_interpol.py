@@ -217,4 +217,5 @@ if __name__ == '__main__':
         print(n_parameters / 1000000)
         flops = FlopCountAnalysis(arc, torch.ones(1, 3, 224, 224)).total()
         print("GFlops", flops / 1000000000)
+        
 
