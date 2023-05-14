@@ -7,11 +7,12 @@ class FracConv(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, alpha: float):
         super().__init__()
         self.alpha = alpha
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=2, stride=2)
+        self.beta = 2 if alpha >= 0.5 else 4
+        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=self.beta, stride=self.beta)
 
     @property
     def upsample_alpha(self):
-        return (self.alpha) * 2
+        return (self.alpha) * self.beta
 
     def forward(self, x):
         upsampled = nn.functional.interpolate(x, scale_factor=self.upsample_alpha, mode="bilinear")

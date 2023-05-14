@@ -43,7 +43,7 @@ class Block(nn.Module):
             self.downscale = FracConv(dim, dim, alpha=scale)
 
     def forward(self, x):
-        #print(x.size())
+        print(x.size())
         input = x
         x = self.dwconv(x)
         x = x.permute(0, 2, 3, 1) # (N, C, H, W) -> (N, H, W, C)
@@ -88,7 +88,8 @@ class ConvNeXt(nn.Module):
             LayerNorm(dims[0], eps=1e-6, data_format="channels_first")
         )
         self.downsample_layers.append(stem)
-        for i in range(3):
+        self.dims = dims
+        for i in range(len(dims)-1):
             #downsample_layer = nn.Sequential(
             #        LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
             #        nn.Conv2d(dims[i], dims[i+1], kernel_size=1, stride=1),
@@ -105,7 +106,7 @@ class ConvNeXt(nn.Module):
         self.stages = nn.ModuleList() # 4 feature resolution stages, each consisting of multiple residual blocks
         dp_rates=[x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))] 
         cur = 0
-        for i in range(4):
+        for i in range(len(dims)):
             stage = nn.Sequential(
                 *[Block(dim=dims[i], drop_path=dp_rates[cur + j],
                 layer_scale_init_value=layer_scale_init_value, scale=1.0
@@ -128,10 +129,10 @@ class ConvNeXt(nn.Module):
             nn.init.constant_(m.bias, 0)
 
     def forward_features(self, x):
-        for i in range(4):
+        for i in range(len(self.dims)):
             x = self.downsample_layers[i](x)
             x = self.stages[i](x)
-        print(x.size())
+        #print(x.size())
         return self.norm(x.mean([-2, -1])) # global average pooling, (N, C, H, W) -> (N, C)
 
     def forward(self, x):
@@ -195,6 +196,16 @@ def fat_interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
         model.load_state_dict(checkpoint["model"])
     return model
+
+@register_model
+def fat_interpol3_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[5, 9, 3], dims=[192, 384, 768], stem=4, ds_interpol=(0.35), scale=1.0, **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
 @register_model
 def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
     model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], ds_interpol=(2/3), **kwargs)
@@ -207,14 +218,14 @@ def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [interpol_convnext_tiny, fat_interpol2_convnext_tiny]:
+    for model in [fat_interpol3_convnext_tiny]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))
         print(input_resolution_range(graph))
         #visualize_architecture(graph, model_name="ConvNeXT").view()
         n_parameters = sum(p.numel() for p in arc.parameters() if p.requires_grad)
-        print(n_parameters / 1000000)
+        print("Params", n_parameters / 1000000)
         flops = FlopCountAnalysis(arc, torch.ones(1, 3, 224, 224)).total()
         print("GFlops", flops / 1000000000)
         

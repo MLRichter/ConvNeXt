@@ -8,7 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import numpy as np
-
+import smart_open
 
 class ImageNetDatasetH5(Dataset):
     def __init__(self, root, split, transform=None, albumentations=False, **kwargs):
@@ -41,7 +41,8 @@ class ImageNetDatasetH5(Dataset):
             idx += self.n_train + self.n_val
         # Read h5 file
         if self.h5_data is None:
-            self.h5_data = h5py.File(self.h5_path, mode='r')
+
+            self.h5_data = h5py.File(smart_open(self.h5_path, "r"), mode='r')
             # print([d for d in self.h5_data])
             # print(self.h5_data['targets'][0])
         # Extract info
