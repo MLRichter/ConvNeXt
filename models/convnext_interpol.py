@@ -99,7 +99,7 @@ class ConvNeXt(nn.Module):
             downsample_layer = nn.Sequential(
                 LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
                 nn.Conv2d(dims[i], dims[i + 1], kernel_size=1, stride=1) if ds_interpol is None
-                else FracConv(in_channels=dims[i], out_channels=dims[i + 1], alpha=(ds_interpol)),
+                else FracConv(in_channels=dims[i], out_channels=dims[i + 1], alpha=(ds_interpol if not isinstance(ds_interpol, list) else ds_interpol[i])),
             )
             self.downsample_layers.append(downsample_layer)
 
@@ -197,9 +197,51 @@ def fat_interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
         model.load_state_dict(checkpoint["model"])
     return model
 
+
+@register_model
+def fat_interpol5_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], stem=4, ds_interpol=[1.0, 0.36, 0.36, 0.36], scale=1.0, **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
 @register_model
 def fat_interpol3_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
-    model = ConvNeXt(depths=[5, 9, 3], dims=[192, 384, 768], stem=4, ds_interpol=(0.35), scale=1.0, **kwargs)
+    model = ConvNeXt(depths=[3, 3, 6, 3, 3], dims=[96, 192, 384, 384, 768], stem=4, ds_interpol=(0.68), scale=1.0, **kwargs)
+    #model = ConvNeXt(depths=[5, 9, 3], dims=[192, 384, 768], stem=4, ds_interpol=(0.35), scale=1.0, **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
+
+@register_model
+def fat_interpol4_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 3, 3, 3, 3], dims=[96, 192, 384, 384, 384, 768], stem=4, ds_interpol=(0.72), scale=1.0, **kwargs)
+    #model = ConvNeXt(depths=[5, 9, 3], dims=[192, 384, 768], stem=4, ds_interpol=(0.35), scale=1.0, **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
+
+@register_model
+def fat_interpol6_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[1, 1, 1, 3, 3, 3, 3, 3], dims=[96, 96, 96, 192, 384, 384, 384, 768], stem=2, ds_interpol=[0.6, 0.6, 0.66, 0.68, 0.70, 0.72, 0.72, 0.72], scale=1.0, **kwargs)
+    #model = ConvNeXt(depths=[5, 9, 3], dims=[192, 384, 768], stem=4, ds_interpol=(0.35), scale=1.0, **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
+@register_model
+def interpol_e1_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[1, 2, 3, 3, 6, 3], dims=[96, 96, 192, 384, 384, 768], stem=2, ds_interpol=[0.55, 0.55, 0.55, 0.55, 0.55, 0.55], scale=1.0, **kwargs)
     if pretrained:
         url = model_urls['convnext_tiny_22k'] if in_22k else model_urls['convnext_tiny_1k']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
@@ -218,7 +260,7 @@ def interpol2_convnext_tiny(pretrained=False,in_22k=False, **kwargs):
 
 if __name__ == '__main__':
     from rfa_toolbox import input_resolution_range, create_graph_from_pytorch_model, visualize_architecture
-    for model in [fat_interpol3_convnext_tiny]:
+    for model in [fat_interpol2_convnext_tiny, fat_interpol6_convnext_tiny]:
         model_name = model.__name__
         arc = model()
         graph = create_graph_from_pytorch_model(arc, input_res=(1, 3, 224, 224))

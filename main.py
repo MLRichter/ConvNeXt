@@ -176,6 +176,8 @@ def get_args_parser():
 
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
+    parser.add_argument('--pretrain', default=False,
+                        help='pretrain model')
     parser.add_argument('--auto_resume', type=str2bool, default=True)
     parser.add_argument('--save_ckpt', type=str2bool, default=True)
     parser.add_argument('--save_ckpt_freq', default=1, type=int)
@@ -342,7 +344,7 @@ def main(args):
 
     model = create_model(
         args.model, 
-        pretrained=False, 
+        pretrained=bool(args.pretrain),
         num_classes=args.nb_classes, 
         drop_path_rate=args.drop_path,
         layer_scale_init_value=args.layer_scale_init_value,
@@ -380,11 +382,11 @@ def main(args):
 
     if args.stemstride:
             assert isinstance(model, models.convnext.ConvNeXt)
-            stem_weights = model.downsample_layers[0][0].weight
-            scaled = torch.nn.Parameter(torch.nn.functional.interpolate(stem_weights, 4))
-            model.downsample_layers[0][0].kernel_size = (4, 4)
+            #stem_weights = model.downsample_layers[0][0].weight
+            #scaled = torch.nn.Parameter(torch.nn.functional.interpolate(stem_weights, 4))
+            #model.downsample_layers[0][0].kernel_size = (4, 4)
             model.downsample_layers[0][0].stride = (4, 4)
-            model.downsample_layers[0][0].weight = scaled
+            #model.downsample_layers[0][0].weight = scaled
     if args.stemstriderep:
             assert isinstance(model, models.convnext.ConvNeXt)
             stem_weights = model.downsample_layers[0][0].weight
